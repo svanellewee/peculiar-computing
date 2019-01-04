@@ -13,7 +13,6 @@ What other treasures exists in the kernel? The only way to know is to learn more
 How do you learn about a project? Kafka? Kubernetes? Install it! But oh, how does one install linux? You can do it using your package manager. But you didnt learn much did you?
 
 ## Install from scratch?
-
 Why not linux from scratch? I have a life. gcc to cross compile gcc to build something else etc etc. Good reasons(Name them) but it takes SO long! Any educational value this project has get's lost in the waiting time. The reasons *I* stopped was that *I* actually ended up getting compilation errors after hours of waiting and copy and pasting. I followed instructions, but the results was discouraging.
 
 ## Why not gentoo/arch?
