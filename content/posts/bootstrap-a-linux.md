@@ -1,33 +1,22 @@
 ---
-title: "Bootstrap a Linux"
+title: "Creating a minimal environment to bootstrap Linux Kernel"
 date: 2019-01-03T21:42:31+02:00
 draft: true
 ---
 
-# How to bootstrap your a baby linux operating system using Ubuntu.
+# Creating a minimal environment to bootstrap the Linux Kernel.
 
-## Why would I do this? 
-I want to understand the tools I use. Docker is an extension of an idea that has actually been in the kernel for a while using cgroups etc. (Just a nicer package)
-BSD jails etc.
-What other treasures exists in the kernel? The only way to know is to learn more about linux.
-How do you learn about a project? Kafka? Kubernetes? Install it! But oh, how does one install linux? You can do it using your package manager. But you didnt learn much did you?
-
-## Install from scratch?
-Why not linux from scratch? I have a life. gcc to cross compile gcc to build something else etc etc. Good reasons(Name them) but it takes SO long! Any educational value this project has get's lost in the waiting time. The reasons *I* stopped was that *I* actually ended up getting compilation errors after hours of waiting and copy and pasting. I followed instructions, but the results was discouraging.
-
-## Why not gentoo/arch?
-Another, copy and paste, follow this method etc etc. better than LFS but still pretty tricky. I have a colleague who actually said "I'm getting better at installing Gentoo!" Pros the bootstrapping compilation steps are done for you. Cons: Still assumes a lot of the user.
-
-## Just why?
-I would like to learn more about Linux tools/systems:
-dd? kpartx loopback devices parted/fdisk the linux kernel itself?
-Maybe I'm a masochist. 
+## Intro
+Here are some notes for creating a very minimal test environment for the linux kernel. This version will re-use the host operating system's kernel to get things going. Follow-up posts will compile the kernel and initial ramdisk from scratch.
 
 # Assumptions
-- I'm going to use a virtual machine
-- I'm going to assume that we still use a BIOS based machine (What's a BIOS? How old are you? Have you even Doom'ed bro?)
+- We're using an Ubuntu 16.04 as our host machine. It comes with almost all the applications we need to build the virtual disk and machine. (We'll also be "borrowing" the host's kernel and init ram disk files.)
+- Qemu will be used as the virtualisation software.
+- For simplicity a BIOS based architecture will be assumed.
 
 # Method
+To summarize here's the steps that we'd be following:
+
 - create a virtual disk
 - partition into a bootable and system partitions
 - format both partitions as ext2
@@ -36,18 +25,26 @@ Maybe I'm a masochist.
 - boot the virtual machine using the new virtual disk
 
 ## create the virtual disk
-The following creates a file called "mink.img" filled with 200Megs worth of zeros.
+In order to create our virtual "hard drive" we need to create a blank file that can be used to simulate an empty hard disk. This can be accomplished using the `dd` command. 
 
+`dd` is quite a dumb command that just moves blocks from one file to another. To illustrate this look at the following:
 ```bash
-dd if=/dev/zero of=mink.img count=200 bs=1M
+dd if=/dev/zero of=mink.img count=200 bs=1M   # create  file called "mink.img" that is 200Mbytes big
 ```
-Here is some magic I'd like to explain. `dd` is just a very DUMB copy command. It takes blocks from one file and plop it to another. In this case it copies data from the special `zero` file and puts it into the new `.img` file.
+The above copies data from the special `zero` file (provided in most unix like operating systems) and puts it into the newly created `.img` file.
 
 ## partition into bootable and system partitions
+Our "hard drive" is empty and still pretty useless. To fix that we need to split it up into 2 parts
+
+- the boot partition (the bootloader can live there)
+- the system partition (the kernel files will live here)
+
+Here is a little problem the more astute reader will notice. _How does one partition a file_? Remember, in linux everything is treated like files anyway. For example `/dev/sda1` is a file in the `/dev` directory that represents 1 partition on a hard drive. So we can use the same tools we use to partition the real hard drive on our fake, virtual drive.
+
+There are a few tools that can partition the drive, but in this example we'll be using `parted`. To split the `.img` file into the required boot and system partitions the following incantation can be used:
 ```bash
 parted --script mink.img mklabel msdos mkpart p ext2 1 20 set 1 boot on mkpart p ext2 21 200
 ```
-`parted` is a tool you can use to partition the harddisk. There's a graphical version (gparted) also but to be succicnt I'm using the encantation.
 
 Let's break it up:
 ```bash
@@ -58,26 +55,37 @@ mkpart p ext2 21 200 # make another partition from Meg 21 and Meg 200
 ```
 
 ## format partitions as ext2
-To format a file (in this case "mink.img") I need to be able to treat it like a drive. That's what loopback devices are. They make the file look like a disk drive that can be mounted or even formatted! So let's see how we format a file like a drive:
+To format our paritions we need to turn them into [loopback devices](https://wiki.osdev.org/Loopback_Device). This is a way "to interpret files as real devices."
 
 ```bash
 kpartx -av mink.img  # create the loopback device and split it over 2 partitions (kpartx splits it up for you)
 sleep 10  # this isnt instant, so wait 10 seconds (overkill)
+```
+In our case this creates 2 files:
+
+- `/dev/mapper/loop0p1` - represents the boot partition
+- `/dev/mapper/loop0p2` - represents the system partition
+
+Which represents the paritions `parted` created on the virtual drive. Now that we have 2 "devices" we can legitimately format them as if they're partitions on a real drive.
+```bash
 mkfs.ext2  /dev/mapper/loop0p1 # format the boot partition
 mkfs.ext2  /dev/mapper/loop0p2 # format the system partition
-# Finally mount both files so we can access and work on it.
+```
+Finally mount both files so we can access and work on it.
+```bash
 mount /dev/mapper/loop0p1 /mnt/pocket/boot_mount 
 mount /dev/mapper/loop0p2 /mnt/pocket/root_mount
 ```
-Now I've mounted a file as 2 separate partitions. The virtual drive is finally useful. Now we can start installing things.
+Now we can start installing things.
 
 ## install a boot loader on the boot partition
-The below is still a little fuzzy to me, but so far this seems to have worked:
+A boot loader is the first program that runs when the computer starts. In our case we'll be using the GRand Unified Bootloader or [GRUB](https://www.gnu.org/software/grub/)
+
+This installs the boot loader to the mounted boot partition of our file. `/dev/loop0` is the loopback representation of the entire file (disregarding partitions)
 ```bash
 grub-install --no-floppy  --modules="biosdisk part_msdos ext2 configfile normal multiboot" --root-directory=/mnt/pocket/boot_mount/ /dev/loop0
 ```
-From what i understand I'm install a bios based boot loader to my virtual drive's boot partition
-
+`TODO` Add a reference here. 
 ## copy from your ubuntu kernel and initrd files.
 So first we make a place for the new files in our drive's system partition.
 ```bash
