@@ -136,6 +136,38 @@ The `boot` keyword triggers the actual booting process. `Tab` actually autocompl
 
 ![Booted Ubuntu Linux Kernel](/itworked.png)
 
+We are now running the kernel with a filesystem in memory (initramfs). Here is what is currently mounted:
+
+![Mounted Initial file system](/initramfs-mount.png)
+
+### The full script for reference
+
+```bash
+#!/usr/bin/env bash
+set -e
+dd if=/dev/zero of=virtual-disk.img count=200 bs=1M
+parted --script virtual-disk.img mklabel msdos mkpart p ext2 1 20 set 1 boot on mkpart p ext2 21 200
+sudo kpartx -av virtual-disk.img
+sleep 10
+sudo mkfs.ext2  /dev/mapper/loop0p1
+sudo mkfs.ext2  /dev/mapper/loop0p2
+sudo mount /dev/mapper/loop0p1 /mnt/boot_mount
+sudo mount /dev/mapper/loop0p2 /mnt/root_mount
+sudo grub-install --no-floppy  --modules="biosdisk part_msdos ext2 configfile normal multiboot" --root-directory=/mnt/boot_mount/ /dev/loop0
+sudo mkdir -p /mnt/root_mount/kernels/
+sudo cp /boot/vmlinuz-4.10.0-27-generic /mnt/root_mount/kernels/
+sudo cp /boot/initrd.img-4.10.0-27-generic /mnt/root_mount/kernels/
+sudo umount /mnt/root_mount/
+qemu-system-x86_64 -drive format=raw,file=virtual-disk.img -m 1G
+set +e
+
+```
+
+## Next Up..
+
+- Setting up a grub menu
+- Setting up a custom Kernel and initramfs/initrd
+
 # References
 
 - [Ross Bamford's site](https://roscopeco.com/2013/08/12/creating-a-bootable-hard-disk-image-with-grub2/)
