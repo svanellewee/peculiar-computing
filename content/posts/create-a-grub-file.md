@@ -27,3 +27,8 @@ qemu-system-x86_64 -drive format=raw,file=virtual-disk.img -m 1G
 You should be greeted by the following
 
 ![Grub Menu](/grub-menu.png)
+
+So after this we have now used the ubuntu kernel, grub and initial ramdisk to start up a smaller linux system. The ideal here would be to do everything from scratch though... that's what we'll try do next time.
+
+Stay tuned!
+
