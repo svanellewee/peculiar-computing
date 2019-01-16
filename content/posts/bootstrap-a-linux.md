@@ -165,7 +165,7 @@ set +e
 
 ## Next Up..
 
-- Setting up a grub menu
+- [Setting up a grub menu]({{< ref "posts/create-a-grub-file" >}})
 - Setting up a custom Kernel and initramfs/initrd
 
 # References
