@@ -115,7 +115,7 @@ But I suspect because I borrowed the ramdisk the initramdisk from another distro
 ```bash
 cd /tmp/
 wget https://busybox.net/downloads/busybox-1.30.0.tar.bz2
-tar -xvf busybox-1.30.0
+tar -xvf busybox-1.30.0.tar.bz2
 cd busybox-1.30.0
 mkdir /tmp/busybox_output
 make O=/tmp/busybox_output defconfig
