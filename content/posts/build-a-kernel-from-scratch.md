@@ -112,8 +112,6 @@ qemu-system-x86_64 -drive format=raw,file=virtual-disk.img -m 1G
 ```
 But I suspect because I borrowed the ramdisk the initramdisk from another distro, it is not meant for this kernel you're not going to get past bootup with it unfortunately. That's why we go back to Mitchel's blog to create our own initramfs.
 
-Unlike Mitchel I'm not really worried about building busybox from scratch. So I'm just going to grab a pre-compiled version:
-
 ```bash
 cd /tmp/
 wget https://busybox.net/downloads/busybox-1.30.0.tar.bz2
