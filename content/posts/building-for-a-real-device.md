@@ -4,13 +4,18 @@ date: 2019-01-29T21:52:23+02:00
 draft: true
 ---
 
-So the other day my buddy Shane gifted me an old ASUS transformer (T100TA). Very generious of him! Since it's a windows laptop and I'm a masochist, obviously I wanted to install Linux on it. Luckly a lot of the work was done already by [this gentleman](http://www.jfwhome.com/2016/01/04/latest-steps-to-install-ubuntu-on-the-asus-t100ta/). Some additional notes was found [here](https://wiki.debian.org/InstallingDebianOn/Asus/T100TA) After some restling with the debian non-free netinstaller(add link), I managed to get a running 32bit debian installation! 
+So the other day my buddy Shane gifted me an old ASUS transformer (T100TA). Very generious of him! Since it's a windows laptop and I'm a masochist, I obviously wanted to install Linux on it. Luckily a lot of the work was done already by [this gentleman](http://www.jfwhome.com/2016/01/04/latest-steps-to-install-ubuntu-on-the-asus-t100ta/). Some additional notes was found [here](https://wiki.debian.org/InstallingDebianOn/Asus/T100TA) After some wrestling[^1]  with the debian [non-free multi-arch netinstaller](https://cdimage.debian.org/cdimage/unofficial/non-free/cd-including-firmware/), I managed to get a running 32bit debian installation! 
 
 I got a few very simple apps running.. and [Quakespasm](http://quakespasm.sourceforge.net/). You know, the essentials. But despite the documentation found, I still couldn't make sound work.
 
-After doing some more reading I realised that the device was able to handle 64bit kernels (the boot infrastructure still ran 32bit for some reason) I had hoped that maybe the drivers I was trying was perhaps only available for 64bit, therefor, I attempted to install the 64bit version of the same debian distro. 
+After doing some more reading I realised that the device was able to handle 64bit kernels (the boot infrastructure still ran 32bit for some reason) I had hoped that maybe the drivers I was trying was perhaps better maintained for the 64bit case, therefor, I attempted to install the 64bit version of the same debian distro. 
 
-Failure! Sound still didn't work on the 64bit version. None of the web resources seemed to have had any effective advice for making it work. This set me off on a mission: _Build my own kernel, and figure out how to debug hardware on Linux_.
+Failure! Sound still didn't work on the 64bit version. None of the web resources seemed to have had any effective advice for making it work. This set me off on a mission: 
+
+1. Build my own linux for an actual piece of hardware and 
+2. Figure out how to debug hardware on Linux.
+
+# Let's build for an actual device
 
 ## Step zero: Download Linux Source
 I decided to get the latest greatest kernel, because why not? (Maybe we'll see why not later..) You can check my previous post [here]({{< ref "posts/build-a-kernel-from-scratch" >}}). I was hoping to use the currently installed debian 64bit kernel configuration to base my kernel build on it (copy, paste and adapt.)
@@ -218,3 +223,4 @@ For some reason USB keyboards don't emulate in QEMU unless you do this, can't ex
 ```bash
 qemu-system-x86_64    -usb   -device usb-host,hostbus=2,hostaddr=1  -drive format=raw,file=/path/to/raw/disk/virtual-disk.img  -m 1G
 ```
+[^1]: I had to quit out of the normal installer process to install the settings file the wifi required to work..
