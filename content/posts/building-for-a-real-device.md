@@ -6,27 +6,27 @@ draft: true
 
 So the other day my buddy Shane gifted me an old ASUS transformer (T100TA). Very generious of him! Since it's a windows laptop and I'm a masochist, I obviously wanted to install Linux on it. Luckily a lot of the work was done already by [this gentleman](http://www.jfwhome.com/2016/01/04/latest-steps-to-install-ubuntu-on-the-asus-t100ta/). Some additional notes was found [here](https://wiki.debian.org/InstallingDebianOn/Asus/T100TA) After some wrestling[^1]  with the debian [non-free multi-arch netinstaller](https://cdimage.debian.org/cdimage/unofficial/non-free/cd-including-firmware/), I managed to get a running 32bit debian installation! 
 
-I got a few very simple apps running.. and [Quakespasm](http://quakespasm.sourceforge.net/). You know, the essentials. But despite the documentation found, I still couldn't make sound work.
+I got a few very simple apps running.. and [Quake](http://quakespasm.sourceforge.net/). You know, the essentials. However, despite the documentation I *still* couldn't make sound work.
 
 After doing some more reading I realised that the device was able to handle 64bit kernels (the boot infrastructure still ran 32bit for some reason) I had hoped that maybe the drivers I was trying was perhaps better maintained for the 64bit case, therefor, I attempted to install the 64bit version of the same debian distro. 
 
-Failure! Sound still didn't work on the 64bit version. None of the web resources seemed to have had any effective advice for making it work. This set me off on a mission: 
+Failure! Sound still didn't work on the 64bit version and now I had a funny screen glitch that occurred. None of the web resources seemed to have had any effective advice for making it work. This set me off on a mission: 
 
-1. Build my own linux for an actual piece of hardware and 
+1. Build my own linux for an actual piece of hardware and..
 2. Figure out how to debug hardware on Linux.
 
-# Let's build for an actual device
+# Build my own linux for an actual piece of hardware
 
 ## Step zero: Download Linux Source
-I decided to get the latest greatest kernel, because why not? (Maybe we'll see why not later..) You can check my previous post [here]({{< ref "posts/build-a-kernel-from-scratch" >}}). I was hoping to use the currently installed debian 64bit kernel configuration to base my kernel build on it (copy, paste and adapt.)
+I decided to get the latest greatest kernel, because why not? (Maybe we'll see "why not" later..) Just like I did [here]({{< ref "posts/build-a-kernel-from-scratch" >}}). I was hoping to use the currently installed debian 64bit kernel configuration to base my kernel build on it (copy, paste and adapt.) Fortunately the linux make-system makes this config migration/upgrade very simple (more on that later)!
 
 ```bash
  wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.20.2.tar.xz
  tar -xvf linux-4.20.2.tar.xz -C ~/ # Will create "linux-4.20.2" in your ~/ dir
 ```
 
-## Step one: Steal The Laptop's current Debian's Config
-On the ASUS, find the config file in the /boot/ directory. Copy it to the system where you're going to build the kernel.
+## Step one: Steal the laptop's current Debian installation's config
+On the ASUS after installing Debian, I found the config file in the /boot/ directory. I copied that to the system where I was going to build the kernel.
 
 In my case the previous kernel for my current version of Debian was `4.9.0-8-amd64`, but it will probably look different on other systems. Then I just had to plug in my flashstick and copy:
 
@@ -38,8 +38,7 @@ umount /to/usb/drive
 # plug usb into build pc...
 ```
 
-Let's call my distro "morty", because I plan on messing with this poor little thing's brain a bit.
-
+Let's call my distro "morty", because I plan on doing horrible things to him, in the name of science or something..
 ```bash
 # On the build pc..
 # /from/usb/drive is a placeholder for wherever you mount your usb drive.
@@ -48,14 +47,16 @@ cp /from/usb/drive/config-4.9.0-8-amd64 ~/morty/.config   # Copy and rename
 cd ~/linux-4.20.2                   # where linux kernel source was extracted too
 make O=~/morty olddefconfig         # Migrate old asus config-4.9.0-8-amd64 to new source config format (adds new config switches)
 ```
+*Here note the last line referencing "olddefconfig". This is the migration make target that takes old kernel settings and inserts the new values with defaults. This is a Linux build system not-so-secret sauce!* 
 
-## Step two: Use the Config to rebuild the latest kernel
+## Step two: Use the config to rebuild the latest kernel
 ```bash
 make O=~/morty menuconfig    # Select/Deselect things... more on this later.
 ```
-This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because your initial ramfs will be vastly simplified that way.
+This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because installing modules during init is tricky, especially if you don't know what you're doing. Making the modules "built-in" means they are ready to be used from bootup, instead of inert until you write the correct `insmod` or `modprobe` incantation.
 
-Set all things in the folling list to be builtin `{*}` and not a module `{M}` in order to simplify the things you need to have installed at initramfs (the temporary startup environment).
+Set all things in the following list to be built-in(pre-installed in the kernel) `{*}` and not a module(to be installed at some later time) `{M}` in order to simplify the things you need to have installed at initramfs (the temporary startup environment).
+
 
 - `Device Drivers --> USB support --> {*} Support for Host-side USB`
 - `Device Drivers --> USB support --> {*} OHCI HCD (USB 1.1) support`
@@ -67,12 +68,7 @@ Set all things in the folling list to be builtin `{*}` and not a module `{M}` in
 Those are the important ones. I suspect you can also deactivate a lot of rubish in your config. Examples of things you can remove are:
 
 - KVM/virtual machine support
-- Weird filesystem support
-- A lot of other thing..
-### What to enable?
-Problems encountered. 
-[Solved](https://wiki.archlinux.org/index.php/Minimal_initramfs#Keyboard_modules)
-Bake in the requirements..
+- Weird filesystem support... and the list goes on
 
 ## Step three: Make a custom initramfs
 Initramfs is the initial filesystem that linux mounts. It exists only in memory and allows you the flexibility to do some things before the main filesystem is mounted. Grab and build our busybox image as follows
@@ -211,8 +207,11 @@ file /init ${HOME}/initramfs/init 755 0 0
 ) > initramfs-list
 ~/morty/usr/gen_init_cpio initramfs-list > custom-initramfs.cpio.gz
 ```
+
 Just put this into file in your initramfs workspace (`~/initramfs`) after busybox has been copied
 
+## Refernces
+https://cdimage.debian.org/cdimage/unofficial/non-free/cd-including-firmware/9.7.0+nonfree/multi-arch/iso-cd/
 
 ## Ways to debug
 grub kernel parameter snippet:.....loglevel=8 # all the debug (must be > 7)
