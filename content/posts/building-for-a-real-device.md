@@ -53,7 +53,7 @@ make O=~/morty olddefconfig         # Migrate old asus config-4.9.0-8-amd64 to n
 ```bash
 make O=~/morty menuconfig    # Select/Deselect things... more on this later.
 ```
-This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because installing modules during init is tricky, especially if you don't know what you're doing. Making the modules "built-in" means they are installed into the kernel and therefor ready to be used from bootup, instead of separate and inert until you write the correct `insmod` or `modprobe` incantation.
+This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because installing modules during init is tricky, especially if you don't know what you're doing. Making the modules "built-in" means they are installed into the kernel and therefor ready to be used from bootup, instead of modules being separate and inert until you write the correct `insmod` or `modprobe` incantation.
 
 Set all things in the following list to be built-in(pre-installed in the kernel) `{*}` and not a module(to be installed at some later time) `{M}` in order to simplify the things you need to have installed at initramfs (the temporary startup environment).
 
@@ -148,7 +148,7 @@ I suspect you can also deactivate a lot of unnecessary things currently enabled 
 and the list goes on. To be fair I'm not sure that everything in my config is required. But this is what worked. If you find a config setting that is unnecessary, let me know. I'll also be setting/amending my list as time goes on.
 
 ## Step three: Make a custom initramfs
-Initramfs is the initial filesystem that linux mounts. It exists only in memory and allows you the flexibility to do some things before the main filesystem is mounted. Grab and build our busybox image as follows
+Initramfs is the initial filesystem that linux mounts. It exists only in memory and allows you the flexibility to do some things before the main filesystem is mounted. I'm going to base my one on Busybox, which is all your normal Unix tools in a convenient package.  Grab and build our busybox image as follows
 
 ```bash
 cd /tmp/
@@ -183,7 +183,9 @@ Make a workspace to put your initramfs. I called mine `~/initramfs`
 mkdir ~/initramfs
 cd ~/initramfs
 ```
-Now to create the `./init` file. This script tells the kernel what the things are we want to mount and start. I'm going to try keep mine, barebones..
+Now to create the `./init` file. The kernel is usually inclined to looks for this script in the initial ramfs, in order to know what code to execute.. All the busybox utilities are basically there to allow the `./init` to do it's job (ie start Linux)
+
+I'm going to try keep mine, barebones..
 ```bash
 # edit the "init" file
 cat <<"EOF" > init
@@ -250,8 +252,35 @@ cp /mnt/custom-initramfs.cpio.gz /boot/
 
 ## Step five: Grub update
 
-## Conclusion: Did I manage to fix my sound issues?
-Answer: Not yet. Why bother with all this then?......
+On the ASUS I modified the grub.cfg as follows:
+
+```
+vim /boot/grub/grub.cfg
+```
+
+I just copied one of the `menuconfig {}` blocks and substituted my own kernel values. Something along the lines of:
+
+```
+menuconfig "My awesome config" {
+  linux /boot/bzImage root=UUID=...some long value....  ro loglevel=8
+  initrd /boot custom-initramfs.cpio.gz
+}
+```
+The UUID value should be available in the other configs there, but apparently there are other ways of finding that value... I won't go into that here. Save and restart.
+
+When Mr ASUS boots again, be sure to select "My awesome config" and see if that works for you. I had quite a few times where it didn't work. The key here is to keep trying. Recompile, boot the ASUS into the current Debian install,  copy over to the new kernel `bzImage` to the ASUS /boot directory, reboot and try "My awesome config" again. 
+
+## Conclusion:
+
+- Question: Did I manage to fix my sound issues?
+- Answer: Not yet. I feel this is just the first step to learning more about a Linux. The sad thing is I'm one of *many* people out there who don't actually know much about Linux, despite relying on a stack that is built on top of it. I would love to know how the OS sausage is made. And I'm hoping in my journey to understand Linux better I will be a better engineer in the longrun. 
+
+- Question: In that case, why not go with [Linux from scratch](http://www.linuxfromscratch.org/lfs/view/stable/)?
+- Answer: Oh I tried, a couple of times on a VM. It was so boring and I found that the lack of having some indication of progress after *hours* of building, only to be snookered by some arbitrary build error that slipped in due to reasons unknown, very frustrating. I think I'll still try it again at some stage, but I think knowing where to go is something that might help a project such as Linux from scratch. I'm trying to answer that need with these blogs.
+
+- Question: In that case, why not go with [Archlinux](https://archlinux.org) or [Gentoo](https://gentoo.org)?
+- Answer: Great projects, gives you a good idea of how the OS's work. But I was concerned that I'd become too dependant the abstractions the tools of these distro's might include. Example being `archroot`. Why that? Why not regular everyday `chroot` ? Oh I see there are niceties...Why? What makes these things essential? Why not just add it to upstream `chroot`? So I will get to these distros one day, I just feel I'm not going to learn as much if I used them right now.
+
 ## Other notes:
 
 The current initramfs doesn't actually add all the symlinks we imported from busybox in our copy. This might fix that:
@@ -291,8 +320,8 @@ Just put this into file in your initramfs workspace (`~/initramfs`) after busybo
 https://cdimage.debian.org/cdimage/unofficial/non-free/cd-including-firmware/9.7.0+nonfree/multi-arch/iso-cd/
 
 ## Ways to debug
-grub kernel parameter snippet:.....loglevel=8 # all the debug (must be > 7)
-USB_TEST/TEST_USB
+- grub kernel parameter snippet, set loglevel=8 # all the debug (must be > 7)
+- USB_TEST/TEST_USB
 Run the VM using qemu.. snippet
 
 For some reason USB keyboards don't emulate in QEMU unless you do this, can't explain why..:
