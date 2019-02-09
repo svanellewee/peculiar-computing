@@ -53,22 +53,99 @@ make O=~/morty olddefconfig         # Migrate old asus config-4.9.0-8-amd64 to n
 ```bash
 make O=~/morty menuconfig    # Select/Deselect things... more on this later.
 ```
-This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because installing modules during init is tricky, especially if you don't know what you're doing. Making the modules "built-in" means they are ready to be used from bootup, instead of inert until you write the correct `insmod` or `modprobe` incantation.
+This was a lot of trial and error. Remember to favour built-in kernel modules `<*>` rather than loadable `<M>` because installing modules during init is tricky, especially if you don't know what you're doing. Making the modules "built-in" means they are installed into the kernel and therefor ready to be used from bootup, instead of separate and inert until you write the correct `insmod` or `modprobe` incantation.
 
 Set all things in the following list to be built-in(pre-installed in the kernel) `{*}` and not a module(to be installed at some later time) `{M}` in order to simplify the things you need to have installed at initramfs (the temporary startup environment).
 
+Assuming you are using kernel 4.20 then the changes that I made can be summarised by the following list of config settings (*Don't panic, I'll show how the way to find these configs yourself*)
+```
+CONFIG_CRC16=y
+CONFIG_CRYPTO_AEAD=y
+CONFIG_CRYPTO_BLKCIPHER=y
+CONFIG_CRYPTO_CBC=y
+CONFIG_CRYPTO_CRC32C=y
+CONFIG_CRYPTO_CTR=y
+CONFIG_CRYPTO_CTS=y
+CONFIG_CRYPTO_DRBG_MENU=y
+CONFIG_CRYPTO_DRBG=y
+CONFIG_CRYPTO_ECB=y
+CONFIG_CRYPTO_JITTERENTROPY=y
+CONFIG_CRYPTO_NULL=y
+CONFIG_CRYPTO_RNG_DEFAULT=y
+CONFIG_CRYPTO_RNG=y
+CONFIG_CRYPTO_SEQIV=y
+CONFIG_CRYPTO_XTS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_EXT4_FS=y
+CONFIG_FS_ENCRYPTION=y
+CONFIG_FS_MBCACHE=y
+CONFIG_HID_GENERIC=y
+CONFIG_HID=y
+CONFIG_I2C_HID=y
+CONFIG_INPUT_MATRIXKMAP=y
+CONFIG_INPUT_POLLDEV=y
+CONFIG_INTEL_ISH_HID=y
+CONFIG_JBD2=y
+CONFIG_KEYBOARD_ADP5588=y
+CONFIG_KEYBOARD_ADP5589=y
+CONFIG_KEYBOARD_DLINK_DIR685=y
+CONFIG_KEYBOARD_GPIO_POLLED=y
+CONFIG_KEYBOARD_GPIO=y
+CONFIG_KEYBOARD_LKKBD=y
+CONFIG_KEYBOARD_LM8323=y
+CONFIG_KEYBOARD_LM8333=y
+CONFIG_KEYBOARD_MATRIX=y
+CONFIG_KEYBOARD_MAX7359=y
+CONFIG_KEYBOARD_MCS=y
+CONFIG_KEYBOARD_MPR121=y
+CONFIG_KEYBOARD_NEWTON=y
+CONFIG_KEYBOARD_OPENCORES=y
+CONFIG_KEYBOARD_QT1070=y
+CONFIG_KEYBOARD_QT2160=y
+CONFIG_KEYBOARD_SAMSUNG=y
+CONFIG_KEYBOARD_STOWAWAY=y
+CONFIG_KEYBOARD_SUNKBD=y
+CONFIG_KEYBOARD_TCA6416=y
+CONFIG_KEYBOARD_TCA8418=y
+CONFIG_KEYBOARD_TM2_TOUCHKEY=y
+CONFIG_KEYBOARD_XTKBD=y
+CONFIG_UHID=y
+CONFIG_USB_EHCI_HCD=y
+CONFIG_USB_EHCI_PCI=y
+CONFIG_USB_HID=y
+CONFIG_USB_OHCI_HCD_PCI=y
+CONFIG_USB_OHCI_HCD_PLATFORM=y
+CONFIG_USB_OHCI_HCD=y
+CONFIG_USB_UHCI_HCD=y
+CONFIG_USB_XHCI_DBGCAP=y
+CONFIG_USB_XHCI_HCD=y
+CONFIG_USB_XHCI_PCI=y
+CONFIG_USB_XHCI_PLATFORM=y
+CONFIG_USB=y
+```
+To find the value let's assume you have just finished upgrading the ASUS config to the new 4.20 kernel config.
 
-- `Device Drivers --> USB support --> {*} Support for Host-side USB`
-- `Device Drivers --> USB support --> {*} OHCI HCD (USB 1.1) support`
-- `Device Drivers --> USB support --> {*} OHCI support for the PCI-bus USB controllers`
-- `Device Drivers --> HID support --> USB HID Support --> <*> USB HID transport layer`
-- `Device Drivers --> HID support --> HID bus support {*}` 
-- `Device Drivers --> HID support --> <*> Generic HID driver` 
+```bash
+make O=~/morty olddefconfig
+```
+Now some of the above `CRYPTO` settings have been done for you! The main stuff I needed was all related to USB/Human Interface Device(HID)/Keyboards. Start menuconfig:
 
-Those are the important ones. I suspect you can also deactivate a lot of rubish in your config. Examples of things you can remove are:
+```bash
+make O=~/morty menuconfig
+```
+
+- Let's say we want to figure out where `CONFIG_USB` exists. Type the `/`-key, type `USB` and the `Location` should be given as `Device Drivers --> USB support --> {*} Support for Host-side USB`. Follow this route through the menu system. When you find it ensure it is set to "built-in"/`{*}` to ensure the setting `CONFIG_USB=y`
+- Similarly to find the `CONFIG_OHCI_HCD` setting, type the `/`-key and search `OHCI_HCD` and follow the route specified by the `Location`-details. This should be `Device Drivers --> USB support --> {*} OHCI HCD (USB 1.1) support` and set this `{*}` so that it will match the setting `CONFIG_OHCI_HCD=y`
+- For the `CONFIG_USB_OHCI_HCD` setting search `OHCI_HCD` and the `Location` should be `Device Drivers --> USB support --> {*} OHCI support for the PCI-bus USB controllers` and also set to 'built-in'.
+
+And so on, if you'd like to know more, or you'd like me to explain this a bit more please get in touch!
+
+I suspect you can also deactivate a lot of unnecessary things currently enabled in your config. Examples of things you can remove are:
 
 - KVM/virtual machine support
-- Weird filesystem support... and the list goes on
+- Weird filesystem support...
+
+and the list goes on. To be fair I'm not sure that everything in my config is required. But this is what worked. If you find a config setting that is unnecessary, let me know. I'll also be setting/amending my list as time goes on.
 
 ## Step three: Make a custom initramfs
 Initramfs is the initial filesystem that linux mounts. It exists only in memory and allows you the flexibility to do some things before the main filesystem is mounted. Grab and build our busybox image as follows
