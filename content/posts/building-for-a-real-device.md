@@ -12,10 +12,10 @@ After doing some more reading I realised that the device was able to handle 64bi
 
 Failure! Sound still didn't work on the 64bit version and now I had a funny screen glitch that occurred. None of the web resources seemed to have had any effective advice for making it work. This set me off on a mission: 
 
-1. Build my own linux for an actual piece of hardware and..
-2. Figure out how to debug hardware on Linux.
+1. Build my own linux kernel for an actual piece of hardware and..
+2. Figure out how to debug hardware behaviour/drivers on Linux.
 
-# Build my own linux for an actual piece of hardware
+# Build my own linux kernel for an actual piece of hardware
 
 ## Step zero: Download Linux Source
 I decided to get the latest greatest kernel, because why not? (Maybe we'll see "why not" later..) Just like I did [here]({{< ref "posts/build-a-kernel-from-scratch" >}}). I was hoping to use the currently installed debian 64bit kernel configuration to base my kernel build on it (copy, paste and adapt.) Fortunately the linux make-system makes this config migration/upgrade very simple (more on that later)!
