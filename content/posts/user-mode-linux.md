@@ -143,4 +143,4 @@ You should then be able to navigate using the new kernel. To validate that you'r
 
 ### Conclusion
 
-I look forward to playing with more user mode linux kernels! I am amazed at the wonderful features the Linux kernel and it's build system allows one to do. Given how fast things move I have no doubt this post will be date soon (as most UML tutorials seem to end up being). Perhaps this can act as a way-marker for those who's trying to make sense of this great (but strangely unknown) feature of the Linux kernel.
+I look forward to playing with more user mode linux kernels! I am amazed at the wonderful features the Linux kernel and it's build system allows one to do. Given how fast things move I have no doubt this post will be dated soon (as most UML tutorials seem to end up being). Perhaps this can act as a way-marker for those who's trying to make sense of this great (but strangely unknown) feature of the Linux kernel.
