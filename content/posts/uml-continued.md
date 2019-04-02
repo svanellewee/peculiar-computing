@@ -117,7 +117,7 @@ proc /proc proc defaults 0 0
 sysfs /sys sysfs defaults 0 0
 EOF
 ```
-The reason we want `sysfs` to be available is so that we can automate the device creation using `mdev`. There is a manual script in the `bootfloppy` example but I'd like to see how hard `mdev` would be given that it's built into `busybox`.
+The reason we want `sysfs` to be available is so that we can automate the device creation using `mdev`. There is a manual script in the `bootfloppy` example but I'd like to see how hard `mdev` would be given that it's built into `busybox`. I followed the example [here](https://git.busybox.net/busybox/plain/docs/mdev.txt).
 
 *Note* there's a note on using he command ` echo /sbin/mdev > /proc/sys/kernel/hotplug` to allow hotplugging of devices. So far I've not been able to make the `hotplug` file appear on /proc/sys. I'll keep trying though.
 
