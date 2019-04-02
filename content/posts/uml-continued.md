@@ -60,18 +60,18 @@ This should mean that you end up with an executable at `~/uml/linux` next we'll 
 
 ## The busybox source
 
-Firstly make a root filesystem
+Firstly make a root filesystem at `/tmp/rootfs` for example:
 
 ```bash
 # make a 400Meg image (Arbitrarily chosen number)
-dd if=/dev/zero of=rootfs bs=1M count=400
+dd if=/dev/zero of=/tmp/rootfs bs=1M count=400
 
 # I want the latest EXT filesystem..
 mkfs.ext4 rootfs
 
 # Make a mount point and mount via loopback
 mkdir ~/rootfs_mnt 
-sudo mount -o loop rootfs ~/rootfs_mnt
+sudo mount -o loop /tmp/rootfs ~/rootfs_mnt
 ```
 
 Download and extract busybox
@@ -127,11 +127,35 @@ Now we can unmount our image
 umount ~/rootfs_mnt/
 ```
 
-Run!
+Run our image that we made (I suggested `/tmp/rootfs` as a name and path)
 ```
-~/uml/linux ubda=rootfs root=/dev/ubda rw mem=1G
+~/uml/linux ubda=/tmp/rootfs root=/dev/ubda rw mem=1G
 ```
 
 Now since we've set up the `sys` we can just call `mdev -s` to setup our `/dev` devices directory!
 
+## What to do next?
+
+How about we run a couple of User-mode linuxes on one machine?
+
+```
+
+cp /tmp/rootfs /tmp/rootfs1
+cp /tmp/rootfs /tmp/rootfs2
+cp /tmp/rootfs /tmp/rootfs3
+cp /tmp/rootfs /tmp/rootfs4
+cp /tmp/rootfs /tmp/rootfs5
+
+cat <<"EOF" >demo-uml.sh
+for index in {1..5}
+do
+   xterm -e ~/uml/linux ubda=/tmp/rootfs${index} root=/dev/ubda rw mem=500M &
+done
+EOF
+bash ./demo-uml.sh
+```
+
+Here are the windows, after I moved them a little
+
+![Many Linuxes](/many-linuxes.png)
 
