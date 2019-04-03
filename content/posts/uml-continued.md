@@ -16,7 +16,7 @@ To build this you need:
 
 ## The kernel source
 
-To build this this time we need to support the special block device (drive) that User-Mode Linux exposes to the world namely `UBD?`. 
+To build everything this time we need to support the special block device (drive) that User-Mode Linux exposes to the world namely `UBD?`. 
 
 ```bash
 # The kernel source tree that I tested this process on.
@@ -56,7 +56,7 @@ make O=~/uml ARCH=um allnoconfig KCONFIG_ALLCONFIG=~/linux-5.0.3/mini.config
 make O=~/uml ARCH=um -j$(nproc)       
 ```
 
-This should mean that you end up with an executable at `~/uml/linux` next we'll need to build the filesystem. That's where busybox's `bootfloppy` example comes in handy for clues.
+This should mean that you end up with an executable at `~/uml/linux`. Next we'll need to build the filesystem and that's where busybox's `bootfloppy` example comes in handy for clues.
 
 ## The busybox source
 
@@ -155,7 +155,7 @@ EOF
 bash ./demo-uml.sh
 ```
 
-Here are the windows, after I moved them a little
+Here are the windows, after I moved them around a bit
 
 ![Many Linuxes](/many-linuxes.png)
 
