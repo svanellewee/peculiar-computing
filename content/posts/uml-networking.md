@@ -148,7 +148,7 @@ sudo pacman -U linux-usermode-5.1.16-1-x86_64.pkg.tar.xz linux-usermode-modules-
 
 ## Running one Usermode Linux Instance
 
-After installing the usermode linux kernel next we should run an instance. On the host's side a 'tapX' device will appear with ip `192.168.0.254`
+After installing the usermode linux kernel next we should run an instance. On the host's side a 'tapX' device will appear with ip `192.168.0.254`. In this case it is `tap0`.
 
 ```bash
 cd ~/source/buildroot
