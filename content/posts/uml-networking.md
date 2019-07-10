@@ -183,3 +183,49 @@ Further, on the UML (guest's) side add an address to the local `eth0` network in
 ```
 
 So there is a link between the internal(guest) eth0 device and the external(host) tun device.
+
+Now we want to make sure your host will know where to respond to if your UML guest makes an request.
+```bash
+HOST> sudo iptables -t nat -I POSTROUTING -o wlp2s0  -j MASQUERADE
+HOST> sudo iptables -I FORWARD -o tap0 -j ACCEPT
+HOST> sudo iptables -I FORWARD -i tap0 -j ACCEPT
+```
+My interface `wlp2s0` is my host's physical wifi adapter. Could also have been something like `eth0` so you should just be aware how you're connected in real life. Another thing your virtual adapter might not be called `tap0`. It could be `tap1`, or if you made a custom one it could be `stephan-uml`. _The name is just a convention._
+
+To test the configuration you should be able to ping the following:
+```bash
+UML> ping 192.168.0.254
+UML> ping 8.8.8.8  # Google's DNS
+```
+
+If you don't get a response, try checking the traffic on your virtual network adapter:
+```bash
+HOST> sudo tcpdump  -i tap0 -l -n
+```
+
+A big help to understanding how to debug UML networking was the [User Mode Linux Book by Jeff Dike](http://ptgmedia.pearsoncmg.com/images/9780131865051/downloads/013865056_Dike_book.pdf) What was great though was that none of the networking debugging hints was special to UML. It was all just stock standard methods for debugging Linux networking. In this sense User Mode Linux is immencely helpful.
+
+## Extra credit: A second UML instance
+
+```bash
+cd ~/source/buildroot
+cp output/images/rootfs{,-alt}.ext2     # copy the rootfs.ext2 file and give it a `-alt` suffix.
+vmlinux mem=1G ubd0=output/images/rootfs-alt.ext2 eth0=tuntap,,,192.168.0.252   # start another tap device (tap1?) with ip 192.168.0.252
+```
+
+Then after logging in as `root` on the UML do the same as previous instance (but with different IP)
+```bash
+UML> ip addr add 192.168.0.251 dev eth0
+UML> ip route add default  via 192.168.0.251 dev eth0
+UML> ping 192.168.0.253   # can you ping the other UML ? Probably not
+UML> ping 8.8.8.8 # Won't work.. why?
+```
+
+Why won't this ping yet? Because you forgot to update the new tap devices iptables. Assuming your new tap device is called `tap1`..
+```bash
+HOST> sudo iptables -t nat -I POSTROUTING -o wlp2s0  -j MASQUERADE
+HOST> sudo iptables -I FORWARD -o tap1 -j ACCEPT
+HOST> sudo iptables -I FORWARD -i tap1 -j ACCEPT
+```
+
+NOW! Pinging will happen. Pinging between UML guests, pinging between hosts and UML's.
